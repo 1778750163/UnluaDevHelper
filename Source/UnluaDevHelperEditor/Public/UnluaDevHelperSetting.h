@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
+#include "Engine/Classes/Engine/EngineTypes.h"
 #include "UnluaDevHelperSetting.generated.h"
 
 UENUM(BlueprintType)

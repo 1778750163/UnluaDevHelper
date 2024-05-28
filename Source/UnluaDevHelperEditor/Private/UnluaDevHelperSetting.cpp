@@ -5,10 +5,10 @@
 
 UUnluaDevHelperSetting::UUnluaDevHelperSetting()
 {
-    LuaFileDirectory = TEXT("Script");
+    LuaFileDirectory = TEXT("Content/Script");
 }
 
 void UUnluaDevHelperSetting::SetLuaFileDirectory()
 {
-    LuaFileDirectory = TEXT("Script");
+    LuaFileDirectory = TEXT("Content/Script");
 }

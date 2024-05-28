@@ -6,8 +6,10 @@
 
 #include "Editor.h"
 #include "ISettingsModule.h"
+#include "lauxlib.h"
 #include "LevelEditor.h"
-#include "LuaEnv.h"
+#include "lua.h"
+#include "Regex.h"
 #include "UnluaDevHelperDefine.h"
 #include "UnluaDevHelperSetting.h"
 #include "UnluaDevHelperStyle.h"
@@ -149,7 +151,7 @@ void FUnluaDevHelperEditorModule::VSCodeOpenSolution(const FString& FileName)
 {
 	auto& Settings = *GetDefault<UUnluaDevHelperSetting>();
 	
-	FString ScriptPath=FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectContentDir(),Settings.LuaFileDirectory));
+	FString ScriptPath=FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(),Settings.LuaFileDirectory));
 	FString FilePath=ScriptPath;
 	if(FileName.Len())
 	{
@@ -195,7 +197,7 @@ void FUnluaDevHelperEditorModule::EnableIDEADebug(lua_State *L)
 void FUnluaDevHelperEditorModule::IdeaOpenSolution(const FString& FileName)
 {
 	auto& Settings = *GetDefault<UUnluaDevHelperSetting>();
-	FString ScriptPath=FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectContentDir(),Settings.LuaFileDirectory));
+	FString ScriptPath=FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(),Settings.LuaFileDirectory));
 	FString FilePath=ScriptPath;
 	if(FileName.Len())
 	{

@@ -3,13 +3,12 @@
 #include "UnluaDevHelperEditor.h"
 #include <iostream>
 #include <winreg.h>
-
 #include "Editor.h"
 #include "ISettingsModule.h"
-#include "lauxlib.h"
 #include "LevelEditor.h"
-#include "lua.h"
+#include "ModuleManager.h"
 #include "Regex.h"
+#include "UnLuaBase.h"
 #include "UnluaDevHelperDefine.h"
 #include "UnluaDevHelperSetting.h"
 #include "UnluaDevHelperStyle.h"
@@ -18,6 +17,11 @@
 #include "Interfaces/IPluginManager.h"
 #include "MenuBar/DHMainMenuBar.h"
 
+extern "C"
+{
+#include "lua.h"
+#include "lauxlib.h"
+}
 
 #define LOCTEXT_NAMESPACE "FUnluaDevHelperModule"
 
@@ -110,12 +114,15 @@ void FUnluaDevHelperEditorModule::ChangeIDE(EIDEType InIDEType)
 	IDEType=InIDEType;
 	auto& Settings = *GetMutableDefault<UUnluaDevHelperSetting>();
 	Settings.IDEType=InIDEType;
+#if UE_4_24_OR_LATER
 	Settings.UpdateProjectUserConfigFile();
+#endif
+	
 }
 
 void FUnluaDevHelperEditorModule::StartDebug(const bool bStart)
 {
-	TMap<lua_State*, UnLua::FLuaEnv*>&  EnvMap=UnLua::FLuaEnv::GetAll();
+	auto  EnvMap=UnLua::FLuaEnv::GetAll();
 	for (auto Evn:EnvMap)
 	{
 		switch (IDEType) {
@@ -171,12 +178,13 @@ void FUnluaDevHelperEditorModule::VSCodeOpenSolution(const FString& FileName)
 
 void FUnluaDevHelperEditorModule::EnableIDEADebug(lua_State *L)
 {
-	const char* userProfile = std::getenv("USERPROFILE");
-	if(userProfile==nullptr)
-	{
+	char* userProfile;
+	size_t requiredSize;
+	errno_t err = _dupenv_s(&userProfile, &requiredSize, "USERPROFILE");
+	if (err != 0 || userProfile == nullptr) {
 		UE_LOG(LogTemp,Error,TEXT("not find USERPROFILE"));
 		return;
-	}
+	} 
 	// set package.cpath
 	lua_getglobal(L, "package");
 	lua_getfield(L, -1, "cpath");
@@ -192,6 +200,8 @@ void FUnluaDevHelperEditorModule::EnableIDEADebug(lua_State *L)
 	if (luaL_dostring(L, TCHAR_TO_ANSI(*luaCode)) != LUA_OK) {
 		lua_pop(L, 1);
 	}
+
+	free(userProfile);
 }
 
 void FUnluaDevHelperEditorModule::IdeaOpenSolution(const FString& FileName)

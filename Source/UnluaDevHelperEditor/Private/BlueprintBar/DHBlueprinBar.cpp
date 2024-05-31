@@ -32,10 +32,19 @@ FDHBlueprinBar::~FDHBlueprinBar()
 
 void FDHBlueprinBar::Init()
 {
-    GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OnAssetOpenedInEditor().AddLambda([this](UObject* Boj,IAssetEditorInstance* AssetEditorInstance)
-    {
-        Blueprint=Cast<UBlueprint>(Boj);
-    });
+
+#if UE_4_24_OR_LATER
+	GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OnAssetOpenedInEditor().AddLambda([this](UObject* Boj,IAssetEditorInstance* AssetEditorInstance)
+	{
+		Blueprint=Cast<UBlueprint>(Boj);
+	});
+#else
+	FAssetEditorManager::Get().OnAssetOpenedInEditor().AddLambda([this](UObject* Boj,IAssetEditorInstance* AssetEditorInstance)
+	{
+		Blueprint=Cast<UBlueprint>(Boj);
+	});
+#endif
+
     
     FBlueprintEditorModule& BlueprintEditorModule = FModuleManager::LoadModuleChecked<FBlueprintEditorModule>("Kismet");
     auto& ExtenderDelegates = BlueprintEditorModule.GetMenuExtensibilityManager()->GetExtenderDelegates();
@@ -144,15 +153,16 @@ void FDHBlueprinBar::OnBindLua() const
     
     const auto Ok = FBlueprintEditorUtils::ImplementNewInterface(Blueprint, FName("UnLuaInterface"));
     if(!Ok) return;
-    
+#if UE_4_24_OR_LATER    
     const auto BlueprintEditors = FModuleManager::LoadModuleChecked<FBlueprintEditorModule>("Kismet").GetBlueprintEditors();
-    for (auto BlueprintEditor : BlueprintEditors)
-    {
-        const auto MyBlueprintEditor = static_cast<FBlueprintEditor*>(&BlueprintEditors[0].Get());
-        if (!MyBlueprintEditor || MyBlueprintEditor->GetBlueprintObj() != Blueprint)
-            continue;
-        MyBlueprintEditor->Compile();
-    }
+	for (auto BlueprintEditor : BlueprintEditors)
+	{
+		const auto MyBlueprintEditor = static_cast<FBlueprintEditor*>(&BlueprintEditors[0].Get());
+		if (!MyBlueprintEditor || MyBlueprintEditor->GetBlueprintObj() != Blueprint)
+			continue;
+		MyBlueprintEditor->Compile();
+	}
+#endif
 }
 
 void FDHBlueprinBar::OnUnBindLua() const
@@ -168,6 +178,7 @@ void FDHBlueprinBar::OnUnBindLua() const
         return;
     
     FBlueprintEditorUtils::RemoveInterface(Blueprint, FName("UnLuaInterface"));
+#if UE_4_24_OR_LATER   
     const auto BlueprintEditors = FModuleManager::LoadModuleChecked<FBlueprintEditorModule>("Kismet").GetBlueprintEditors();
     for (auto BlueprintEditor : BlueprintEditors)
     {
@@ -176,6 +187,7 @@ void FDHBlueprinBar::OnUnBindLua() const
             continue;
         MyBlueprintEditor->Compile();
     }
+#endif
 }
 
 void FDHBlueprinBar::OnCreateLuaFile() const

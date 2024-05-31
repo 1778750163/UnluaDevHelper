@@ -2,12 +2,17 @@
 
 #include "LevelEditor.h"
 #include "MainMenuBarCommands.h"
-#include "ToolMenu.h"
-#include "ToolMenuDelegates.h"
-#include "ToolMenus.h"
+
 #include "UnluaDevHelperDefine.h"
 #include "UnluaDevHelperEditor.h"
 #include "UnluaDevHelperSetting.h"
+#if UE_4_24_OR_LATER
+	#include "ToolMenu.h"
+	#include "ToolMenuDelegates.h"
+	#include "ToolMenus.h"
+#else
+	#include "MultiBoxBuilder.h"
+#endif
 
 #define LOCTEXT_NAMESPACE "FDHMainMenuBar"
 
@@ -108,7 +113,9 @@ void FDHMainMenuBar::OnEnableDebug()
 {
     auto& Settings = *GetMutableDefault<UUnluaDevHelperSetting>();
     Settings.bEnableDebug=!Settings.bEnableDebug;
+#if UE_4_24_OR_LATER
     Settings.UpdateProjectUserConfigFile();
+#endif
 }
 
 bool FDHMainMenuBar::IsEnableDebugCheck()

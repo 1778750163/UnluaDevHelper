@@ -1,6 +1,14 @@
 #pragma once
 
+#include "CoreMinimal.h"
+
+class FExtender;
+class FUICommandList;
 enum class EIDEType : uint8;
+
+
+class FMenuBuilder;
+class SWidget;
 
 class FDHMainMenuBar
 {
@@ -25,7 +33,7 @@ private:
     static bool IsEnableDebugCheck();
 
     
-    static void MakeIDEChangeMenu(FMenuBuilder&);
+    static void MakeIDEChangeMenu(FMenuBuilder& MenuBuilde);
     
 private:
     const TSharedRef<FUICommandList> CommandList;

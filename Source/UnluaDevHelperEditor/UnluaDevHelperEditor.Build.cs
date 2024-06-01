@@ -44,6 +44,7 @@ public class UnluaDevHelperEditor : ModuleRules
 				"UnrealEd",
 				"Json",
 				"JsonUtilities", "UMGEditor",
+				"DesktopPlatform",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

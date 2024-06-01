@@ -19,4 +19,5 @@ public:
     TSharedPtr<FUICommandInfo> SelectVSCode;
     TSharedPtr<FUICommandInfo> SelectIDEA;
     TSharedPtr<FUICommandInfo> EnableDebug;
+    TSharedPtr<FUICommandInfo> ChoosePath;
 };

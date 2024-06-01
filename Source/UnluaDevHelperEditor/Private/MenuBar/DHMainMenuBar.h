@@ -31,13 +31,14 @@ private:
 
     static void OnEnableDebug();
     static bool IsEnableDebugCheck();
-
     
     static void MakeIDEChangeMenu(FMenuBuilder& MenuBuilde);
     
 private:
     const TSharedRef<FUICommandList> CommandList;
     TSharedPtr<FExtender> Extender;
+    FString SelectedPath;
+    TSharedPtr<STextBlock> PathDisplayTextBlock;
 };
 
 

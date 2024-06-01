@@ -1,17 +1,18 @@
-#include "MenuBar/DHMainMenuBar.h"
 
+
+#include "MenuBar/DHMainMenuBar.h"
+#include "DesktopPlatformModule.h"
+#include "IDesktopPlatform.h"
 #include "LevelEditor.h"
 #include "MainMenuBarCommands.h"
-
-#include "UnluaDevHelperDefine.h"
 #include "UnluaDevHelperEditor.h"
-#include "UnluaDevHelperSetting.h"
-#if UE_4_24_OR_LATER
+
+#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION > 23
 	#include "ToolMenu.h"
 	#include "ToolMenuDelegates.h"
 	#include "ToolMenus.h"
 #else
-	#include "MultiBoxBuilder.h"
+	#include "Framework/MultiBox/MultiBoxBuilder.h"
 #endif
 
 #define LOCTEXT_NAMESPACE "FDHMainMenuBar"
@@ -86,6 +87,69 @@ TSharedRef<SWidget> FDHMainMenuBar::GenerateMenu()
     MenuBuilder.AddSubMenu(LOCTEXT("Section_ChangeIDE", "ChangeIDE"),
                            LOCTEXT("Section_ChangeIDE_ToolTip", "Change Lua IDE"),
                            FNewMenuDelegate::CreateStatic(&FDHMainMenuBar::MakeIDEChangeMenu));
+    // Path Chooser
+    if(SelectedPath.Len()==0)
+    {
+        FRegistryManager::Get().GetString(EDevHelperSettingToString(EDevHelperSetting::LuaFileDirectory),SelectedPath);
+    }
+    MenuBuilder.AddWidget(
+            SNew(SHorizontalBox)
+            + SHorizontalBox::Slot()
+            .AutoWidth()
+            .VAlign(VAlign_Fill)
+            .HAlign(HAlign_Center)
+            [
+                SNew(SOverlay)
+                + SOverlay::Slot()
+                .VAlign(VAlign_Fill)
+                .HAlign(HAlign_Fill)
+                [
+                    SNew(SBorder)
+                    .BorderBackgroundColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.f))
+                ]
+                + SOverlay::Slot()
+                .Padding(4.0)
+                .VAlign(VAlign_Center)
+                .HAlign(HAlign_Fill)
+                [
+                        SAssignNew(PathDisplayTextBlock, STextBlock)
+                        .Text_Lambda([this]() { return FText::FromString(SelectedPath); })
+                ]
+            ]
+            + SHorizontalBox::Slot()
+            .AutoWidth()
+            .Padding(10, 0, 0, 0)  // Add some padding between the text and the button
+            [
+                SNew(SButton)
+                .Text(LOCTEXT("LuaScriptPathButton", "LuaScriptPath"))
+                .OnClicked_Lambda([this]() -> FReply {
+                    IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+                    if (DesktopPlatform)
+                    {
+                        FString Path;
+                        if (DesktopPlatform->OpenDirectoryDialog(
+                                FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr),
+                                LOCTEXT("ChooseLuaScriptDirectory", "Choose Lua Script Directory").ToString(),
+                                TEXT(""),
+                                Path))
+                        {
+                            if (Path.Len() > 0)
+                            {
+                                FString Left,Right;
+                                if(Path.Split(FPaths::ConvertRelativePathToFull(FPaths::ProjectDir()),&Left,&Right,ESearchCase::Type::CaseSensitive)&&Right.Len())
+                                {
+                                    SelectedPath=Right;
+                                    FRegistryManager::Get().SetString(EDevHelperSettingToString(EDevHelperSetting::LuaFileDirectory),SelectedPath);
+                                    PathDisplayTextBlock->SetText(FText::FromString(SelectedPath));
+                                }
+                            }
+                        }
+                    }
+                    return FReply::Handled();
+                })
+            ],
+            FText::GetEmpty()  // Optional label text, we leave it empty as we don't need a label here.
+        );
     MenuBuilder.EndSection();
 
     return MenuBuilder.MakeWidget();
@@ -105,30 +169,31 @@ void FDHMainMenuBar::OnSelectIDE(EIDEType Type)
 
 bool FDHMainMenuBar::OnCheckIDE(EIDEType Type)
 {
-    const auto& Settings = *GetDefault<UUnluaDevHelperSetting>();
-    return Settings.IDEType==Type;
+    EIDEType IDEType;
+    FRegistryManager::Get().GetEnum(EDevHelperSettingToString(EDevHelperSetting::IDEType),IDEType);
+    return IDEType==Type;
 }
+
 
 void FDHMainMenuBar::OnEnableDebug()
 {
-    auto& Settings = *GetMutableDefault<UUnluaDevHelperSetting>();
-    Settings.bEnableDebug=!Settings.bEnableDebug;
-#if UE_4_24_OR_LATER
-    Settings.UpdateProjectUserConfigFile();
-#endif
+    bool bEnableDebug=false;
+    FRegistryManager::Get().GetBool(EDevHelperSettingToString(EDevHelperSetting::bEnableDebug),bEnableDebug);
+    FRegistryManager::Get().SetBool(EDevHelperSettingToString(EDevHelperSetting::bEnableDebug),!bEnableDebug);
 }
 
 bool FDHMainMenuBar::IsEnableDebugCheck()
 {
-    const auto& Settings = *GetDefault<UUnluaDevHelperSetting>();
-    return Settings.bEnableDebug;
+    bool bEnableDebug=false;
+    FRegistryManager::Get().GetBool(EDevHelperSettingToString(EDevHelperSetting::bEnableDebug),bEnableDebug);
+    return bEnableDebug;
 }
 
 
 void FDHMainMenuBar::MakeIDEChangeMenu(FMenuBuilder& MenuBuilde)
 {
     {
-        MenuBuilde.BeginSection(NAME_None, LOCTEXT("Section_ChangeIDE", "IDE"));
+        MenuBuilde.BeginSection(NAME_None, LOCTEXT("Section_ChangeIDE", "ChangeIDE"));
         MenuBuilde.AddMenuEntry(FMainMenuBarCommands::Get().SelectVSCode, NAME_None, LOCTEXT("SelectVSCode", "VSCode"));
         MenuBuilde.AddMenuEntry(FMainMenuBarCommands::Get().SelectIDEA, NAME_None, LOCTEXT("SelectIDEA", "IDEA"));
         MenuBuilde.EndSection();

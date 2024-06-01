@@ -1,6 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
-#include "UnluaDevHelperSetting.h"
+#include "RegistryManager.h"
 #include "UnLuaInterface.h"
 
 #include "UnluaDevHelperDefine.generated.h"

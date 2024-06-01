@@ -9,6 +9,7 @@ void FMainMenuBarCommands::RegisterCommands()
     UI_COMMAND(SelectVSCode, "Change IDE Type", "Select VSCode.", EUserInterfaceActionType::RadioButton, FInputChord());
     UI_COMMAND(SelectIDEA, "Change IDE Type", "Select IDEA.",EUserInterfaceActionType::RadioButton, FInputChord());
     UI_COMMAND(EnableDebug, "Enable Debug", "Enable Debug.",EUserInterfaceActionType::ToggleButton, FInputChord());
+    UI_COMMAND(ChoosePath, "Choose Path", "Choose a directory path", EUserInterfaceActionType::Button, FInputChord());
 }
 
 #undef LOCTEXT_NAMESPACE

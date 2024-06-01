@@ -5,16 +5,11 @@
 #include <winreg.h>
 #include "Editor.h"
 #include "ISettingsModule.h"
-#include "LevelEditor.h"
-#include "ModuleManager.h"
-#include "Regex.h"
+#include "RegistryManager.h"
 #include "UnLuaBase.h"
-#include "UnluaDevHelperDefine.h"
-#include "UnluaDevHelperSetting.h"
 #include "UnluaDevHelperStyle.h"
 #include "BlueprintBar/DHBlueprinBar.h"
 #include "IDEAPathLocator/IDEAPathLocator.h"
-#include "Interfaces/IPluginManager.h"
 #include "MenuBar/DHMainMenuBar.h"
 
 extern "C"
@@ -31,23 +26,9 @@ void FUnluaDevHelperEditorModule::StartupModule()
 
 	FUnluaDevHelperStyle::GetInstance();
 	
-	ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings");
-	if (SettingsModule != nullptr)
-	{
-		UUnluaDevHelperSetting* Setting=GetMutableDefault<UUnluaDevHelperSetting>();
-		if(Setting->LuaFileDirectory.Len()==0)
-		{
-			Setting->SetLuaFileDirectory();
-		}
-		SettingsModule->RegisterSettings("Project", "Plugins", "UnluaDevHelper",
-			LOCTEXT("UnluaDevHelper", "UnluaDevHelper"),
-			LOCTEXT("UnluaDevHelper", "UnluaDevHelper some setting"),
-			GetMutableDefault<UUnluaDevHelperSetting>()
-		);
-	}
+	GetLuaProjectPath();
 	
-	auto& Settings = *GetDefault<UUnluaDevHelperSetting>();
-	IDEType=Settings.IDEType;
+	FRegistryManager::Get().GetEnum(EDevHelperSettingToString(EDevHelperSetting::IDEType),IDEType); 
 	VSCodePort=8818;
 	IDEAPort=9966;
 	Host=TEXT("127.0.0.1");
@@ -79,12 +60,6 @@ void FUnluaDevHelperEditorModule::ShutdownModule()
 
 	DHBlueprinBar->Clear();
 	DHBlueprinBar=nullptr;
-
-	ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings");
-	if (SettingsModule != nullptr)
-	{
-		SettingsModule->UnregisterSettings("Project", "Plugins", "UnluaDevHelper");
-	}
 }
 
 void FUnluaDevHelperEditorModule::OnPostEngineInit()
@@ -112,28 +87,23 @@ void FUnluaDevHelperEditorModule::OpenSolution(const FString& FileName)
 void FUnluaDevHelperEditorModule::ChangeIDE(EIDEType InIDEType)
 {
 	IDEType=InIDEType;
-	auto& Settings = *GetMutableDefault<UUnluaDevHelperSetting>();
-	Settings.IDEType=InIDEType;
-#if UE_4_24_OR_LATER
-	Settings.UpdateProjectUserConfigFile();
-#endif
-	
+	FRegistryManager::Get().SetEnum(EDevHelperSettingToString(EDevHelperSetting::IDEType),IDEType); 
 }
 
 void FUnluaDevHelperEditorModule::StartDebug(const bool bStart)
 {
-	auto  EnvMap=UnLua::FLuaEnv::GetAll();
-	for (auto Evn:EnvMap)
+	auto*  State=UnLua::GetState();
+	if(State)
 	{
 		switch (IDEType) {
 		case EIDEType::VSCode:
 			{
-				EnableVSCodeDebug(Evn.Key);
+				EnableVSCodeDebug(State);
 			}
 			break;
 		case EIDEType::IDEA:
 			{
-				EnableIDEADebug(Evn.Key);
+				EnableIDEADebug(State);
 			}
 			break;
 		}
@@ -156,9 +126,7 @@ void FUnluaDevHelperEditorModule::EnableVSCodeDebug(lua_State *L)
 
 void FUnluaDevHelperEditorModule::VSCodeOpenSolution(const FString& FileName)
 {
-	auto& Settings = *GetDefault<UUnluaDevHelperSetting>();
-	
-	FString ScriptPath=FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(),Settings.LuaFileDirectory));
+	FString ScriptPath=FPaths::ConvertRelativePathToFull(GetLuaProjectPath());
 	FString FilePath=ScriptPath;
 	if(FileName.Len())
 	{
@@ -206,8 +174,7 @@ void FUnluaDevHelperEditorModule::EnableIDEADebug(lua_State *L)
 
 void FUnluaDevHelperEditorModule::IdeaOpenSolution(const FString& FileName)
 {
-	auto& Settings = *GetDefault<UUnluaDevHelperSetting>();
-	FString ScriptPath=FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(),Settings.LuaFileDirectory));
+	FString ScriptPath=FPaths::ConvertRelativePathToFull(GetLuaProjectPath());
 	FString FilePath=ScriptPath;
 	if(FileName.Len())
 	{

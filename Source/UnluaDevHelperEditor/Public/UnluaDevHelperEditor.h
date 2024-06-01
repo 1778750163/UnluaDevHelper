@@ -3,10 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "RegistryManager.h"
 #include "IDEAPathLocator/IDEAPathLocator.h"
 #include "Modules/ModuleManager.h"
-
-enum class EIDEType : uint8;
 
 struct lua_State;
 class FDHMainMenuBar;

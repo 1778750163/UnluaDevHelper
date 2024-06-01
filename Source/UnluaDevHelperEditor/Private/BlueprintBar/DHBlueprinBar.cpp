@@ -8,6 +8,7 @@
 #include "UnLuaInterface.h"
 #include "Kismet/KismetStringLibrary.h"
 #include "Kismet2/BlueprintEditorUtils.h"
+#include "Toolkits/AssetEditorManager.h"
 
 
 #define LOCTEXT_NAMESPACE "FDHBlueprinBar" 
@@ -33,7 +34,7 @@ FDHBlueprinBar::~FDHBlueprinBar()
 void FDHBlueprinBar::Init()
 {
 
-#if UE_4_24_OR_LATER
+#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION > 23
 	GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OnAssetOpenedInEditor().AddLambda([this](UObject* Boj,IAssetEditorInstance* AssetEditorInstance)
 	{
 		Blueprint=Cast<UBlueprint>(Boj);
@@ -153,7 +154,7 @@ void FDHBlueprinBar::OnBindLua() const
     
     const auto Ok = FBlueprintEditorUtils::ImplementNewInterface(Blueprint, FName("UnLuaInterface"));
     if(!Ok) return;
-#if UE_4_24_OR_LATER    
+#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION > 23    
     const auto BlueprintEditors = FModuleManager::LoadModuleChecked<FBlueprintEditorModule>("Kismet").GetBlueprintEditors();
 	for (auto BlueprintEditor : BlueprintEditors)
 	{
@@ -178,7 +179,7 @@ void FDHBlueprinBar::OnUnBindLua() const
         return;
     
     FBlueprintEditorUtils::RemoveInterface(Blueprint, FName("UnLuaInterface"));
-#if UE_4_24_OR_LATER   
+#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION > 23 
     const auto BlueprintEditors = FModuleManager::LoadModuleChecked<FBlueprintEditorModule>("Kismet").GetBlueprintEditors();
     for (auto BlueprintEditor : BlueprintEditors)
     {

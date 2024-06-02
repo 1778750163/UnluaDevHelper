@@ -3,7 +3,9 @@
 
 #include "LuaFileInfo.h"
 
+#include "EditorStyleSet.h"
 #include "LuaRichTextSyntaxHighlighterTextLayoutMarshaller.h"
+#include "SEditableTextBox.h"
 #include "SlateOptMacros.h"
 #include "TestStyle.h"
 #include "UnluaDevHelperSetting.h"
@@ -44,11 +46,51 @@ void SLuaFileInfo::Construct(const FArguments& InArgs)
 		SNew(SVerticalBox)
 		+ SVerticalBox::Slot()
 		.AutoHeight()
-		.HAlign(HAlign_Left)
+		.HAlign(HAlign_Fill)
+		.VAlign(VAlign_Center)
 		.Padding(10.0f, 10.0f, 10.0f, 0.0f)
 		[
-			SNew(STextBlock)
-			.Text(this, &SLuaFileInfo::OnFilePath)
+			SNew(SHorizontalBox)
+			+SHorizontalBox::Slot()
+			.HAlign(HAlign_Left)
+			.VAlign(VAlign_Center)
+			.MaxWidth(150)
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("BlueprintPath", "Blueprint Path"))
+			]
+			+SHorizontalBox::Slot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Center)
+			[
+				SNew(SEditableTextBox)
+				.Text(this, &SLuaFileInfo::OnBlueprintPath)
+				.IsReadOnly(true)
+			]
+		]
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.HAlign(HAlign_Fill)
+		.VAlign(VAlign_Center)
+		.Padding(10.0f, 10.0f, 10.0f, 0.0f)
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			.HAlign(HAlign_Left)
+			.VAlign(VAlign_Center)
+			.MaxWidth(150)
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("SpawnLuaFilePath", "Spawn Lua File Path"))
+			]
+			+ SHorizontalBox::Slot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Center)
+			[
+				SNew(SEditableTextBox)
+				.Text(this, &SLuaFileInfo::OnFilePath)
+				.IsReadOnly(true)
+			]
 		]
 		+ SVerticalBox::Slot()
 		.AutoHeight()
@@ -168,7 +210,7 @@ void SLuaFileInfo::Construct(const FArguments& InArgs)
 			]
 		]
 	];
-	if(TextComboBox.IsValid())
+	if(TextComboBox.IsValid()&&SpeedSettingStrings.Num())
 	{
 		TextComboBox->SetSelectedItem(SpeedSettingStrings[0]);
 	}
@@ -202,20 +244,25 @@ void SLuaFileInfo::OnTextChanged(const FText& Text)
 	RefreshFilePath();
 }
 
-FText SLuaFileInfo::OnFilePath() const
+FText SLuaFileInfo::OnBlueprintPath() const
 {
 	return FText::FromString(BlueprintPath);
+}
+
+FText SLuaFileInfo::OnFilePath() const
+{
 	return FText::FromString(FilePath);
 }
 
 void SLuaFileInfo::RefreshFilePath()
 {
-	FString Path=FPaths::ConvertRelativePathToFull(GetLuaProjectPath());
+	FString Path="";
 	FString SubPath="";
 	FString FileSuffx="";
 	UUnluaDevHelperSetting* Setting=GetMutableDefault<UUnluaDevHelperSetting>();
 	if(IsValid(Setting))
 	{
+		Path=Setting->LuaFileDirectory;
 		for (auto LuaInfo:Setting->LuaFileCreationRules)
 		{
 			if(LuaInfo.Key.Len() && LuaInfo.Key==CheckLuaFileStr)
@@ -236,6 +283,10 @@ void SLuaFileInfo::RefreshFilePath()
 	{
 		FilePath=Path;
 	}
+	FilePath.ReplaceInline(TEXT("\\\\"),TEXT("."));
+	FilePath.ReplaceInline(TEXT("//"),TEXT("."));
+	FilePath.ReplaceInline(TEXT("/"),TEXT("."));
+	FilePath.ReplaceInline(TEXT("\\"),TEXT("."));
 }
 
 FText SLuaFileInfo::GetRichEditableText() const

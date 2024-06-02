@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "RegistryManager.h"
+#include "UnluaDevHelperSetting.h"
 #include "IDEAPathLocator/IDEAPathLocator.h"
 #include "Modules/ModuleManager.h"
 

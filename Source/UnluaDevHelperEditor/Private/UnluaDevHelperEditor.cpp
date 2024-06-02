@@ -6,9 +6,12 @@
 #include "Editor.h"
 #include "ISettingsModule.h"
 #include "RegistryManager.h"
+#include "TestStyle.h"
 #include "UnLuaBase.h"
+#include "UnluaDevHelperSetting.h"
 #include "UnluaDevHelperStyle.h"
 #include "BlueprintBar/DHBlueprinBar.h"
+#include "CreateLua/CodeEditorStyle.h"
 #include "IDEAPathLocator/IDEAPathLocator.h"
 #include "MenuBar/DHMainMenuBar.h"
 
@@ -25,8 +28,25 @@ void FUnluaDevHelperEditorModule::StartupModule()
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 
 	FUnluaDevHelperStyle::GetInstance();
+	FTestStyle::ResetToDefault();
+	FCodeEditorStyle::Initialize();
 	
-	GetLuaProjectPath();
+	TSharedPtr<SDockTab> CreateLuaFileTab=FGlobalTabmanager::Get()->FindExistingLiveTab(FDHBlueprinBar::CreateLuaFileTabName);
+	if(CreateLuaFileTab)
+		CreateLuaFileTab->RequestCloseTab();
+	
+	ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings");
+	if (SettingsModule != nullptr)
+	{
+		UUnluaDevHelperSetting* Setting=GetMutableDefault<UUnluaDevHelperSetting>();
+
+		SettingsModule->RegisterSettings("Project", "Plugins", "UnluaDevHelper",
+			LOCTEXT("UnluaDevHelper", "UnluaDevHelper"),
+			LOCTEXT("UnluaDevHelper", "UnluaDevHelper some setting"),
+			GetMutableDefault<UUnluaDevHelperSetting>()
+		);
+	}
+	
 	
 	FRegistryManager::Get().GetEnum(EDevHelperSettingToString(EDevHelperSetting::IDEType),IDEType); 
 	VSCodePort=8818;
@@ -60,6 +80,13 @@ void FUnluaDevHelperEditorModule::ShutdownModule()
 
 	DHBlueprinBar->Clear();
 	DHBlueprinBar=nullptr;
+
+	
+	ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings");
+	if (SettingsModule != nullptr)
+	{
+		SettingsModule->UnregisterSettings("Project", "Plugins", "UnluaDevHelper");
+	}
 }
 
 void FUnluaDevHelperEditorModule::OnPostEngineInit()

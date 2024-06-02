@@ -7,7 +7,6 @@
 UENUM()
 enum class EDevHelperSetting :uint8
 {
-    LuaFileDirectory,
     IDEType,
     bEnableDebug,
 };
@@ -16,19 +15,12 @@ FString static EDevHelperSettingToString( EDevHelperSetting v )
 {
     const char* Ret = ""; switch ( v )
     {
-    case EDevHelperSetting::LuaFileDirectory:   Ret = "LuaFileDirectory";   break;
     case EDevHelperSetting::IDEType:            Ret = "IDEType";            break;
     case EDevHelperSetting::bEnableDebug:       Ret = "bEnableDebug";       break;
     }
 
     return Ret;
 }
-UENUM(BlueprintType)
-enum class  EIDEType : uint8
-{
-    VSCode = 0  UMETA(DisplayName="VSCode"),
-    IDEA        UMETA(DisplayName="IDEA"),
-};
 
 class FRegistryManager {
 public:
@@ -72,17 +64,3 @@ bool FRegistryManager::GetEnum(const FString& name, TEnum& value) {
     }
     return false;
 }
-
-
-static FString GetLuaProjectPath()
-{
-    FString LuaFileDirectory;
-    if(!FRegistryManager::Get().GetString(EDevHelperSettingToString(EDevHelperSetting::LuaFileDirectory),LuaFileDirectory) || LuaFileDirectory.Len()==0)
-    {
-        LuaFileDirectory=TEXT("Content/Script");
-        FRegistryManager::Get().SetString(EDevHelperSettingToString(EDevHelperSetting::LuaFileDirectory),LuaFileDirectory);
-    }
-    return FPaths::Combine(FPaths::ProjectDir(),LuaFileDirectory)  ;
-}
-
-

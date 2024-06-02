@@ -23,7 +23,6 @@ private:
 
     TSharedRef<SWidget> GenerateMenu();
 
-
     void OnOpenSoulation();
 
     static void OnSelectIDE(EIDEType Type);
@@ -33,7 +32,9 @@ private:
     static bool IsEnableDebugCheck();
     
     static void MakeIDEChangeMenu(FMenuBuilder& MenuBuilde);
-    
+
+
+
 private:
     const TSharedRef<FUICommandList> CommandList;
     TSharedPtr<FExtender> Extender;

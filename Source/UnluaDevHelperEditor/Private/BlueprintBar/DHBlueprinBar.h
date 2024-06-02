@@ -18,12 +18,14 @@ public:
 
     TSharedRef<SWidget> ConstructSubMenu() const;
 
+    static const FName CreateLuaFileTabName;
 private:
     void OnBindLua() const;
 
     void OnUnBindLua() const;
 
-    void OnCreateLuaFile() const;
+    void OnCreateLuaFile();
+    TSharedRef<class SDockTab> OnSpawnCreateLuaFileTab(const class FSpawnTabArgs& SpawnTabArgs);
 
     void OnCopyRelativePath() const;
     

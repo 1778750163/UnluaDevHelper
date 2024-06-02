@@ -6,12 +6,16 @@
 #include "UnluaDevHelperDefine.h"
 #include "UnluaDevHelperEditor.h"
 #include "UnLuaInterface.h"
+#include "CreateLua/LuaFileInfo.h"
 #include "Kismet/KismetStringLibrary.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Toolkits/AssetEditorManager.h"
 
 
 #define LOCTEXT_NAMESPACE "FDHBlueprinBar" 
+
+const FName FDHBlueprinBar::CreateLuaFileTabName("CreateLuaFile");
+
 
 FDHBlueprinBar::FDHBlueprinBar()
     : CommandList(new FUICommandList),
@@ -50,10 +54,15 @@ void FDHBlueprinBar::Init()
     FBlueprintEditorModule& BlueprintEditorModule = FModuleManager::LoadModuleChecked<FBlueprintEditorModule>("Kismet");
     auto& ExtenderDelegates = BlueprintEditorModule.GetMenuExtensibilityManager()->GetExtenderDelegates();
     ExtenderDelegates.Add(FAssetEditorExtender::CreateRaw(this,&FDHBlueprinBar::GenerateBlueprinBar));
+
+    FGlobalTabmanager::Get()->RegisterNomadTabSpawner(CreateLuaFileTabName, FOnSpawnTab::CreateRaw(this, &FDHBlueprinBar::OnSpawnCreateLuaFileTab))
+    .SetDisplayName(LOCTEXT("FCreateLuaFileTabTitle", "CreateLuaFile"))
+    .SetMenuType(ETabSpawnerMenuType::Hidden);
 }
 
 void FDHBlueprinBar::Clear()
 {
+    FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(CreateLuaFileTabName);
 }
 
 TSharedRef<FExtender> FDHBlueprinBar::GenerateBlueprinBar(const TSharedRef<FUICommandList> InCommandList, const TArray<UObject*> Objects) const
@@ -191,8 +200,31 @@ void FDHBlueprinBar::OnUnBindLua() const
 #endif
 }
 
-void FDHBlueprinBar::OnCreateLuaFile() const
+void FDHBlueprinBar::OnCreateLuaFile() 
 {
+    FGlobalTabmanager::Get()->TryInvokeTab(CreateLuaFileTabName);
+}
+
+TSharedRef<class SDockTab> FDHBlueprinBar::OnSpawnCreateLuaFileTab(const class FSpawnTabArgs& SpawnTabArgs)
+{
+    FString BlueprintPath="";
+    if(IsValid(Blueprint))
+    {
+        BlueprintPath=Blueprint->GetPathName();
+    }
+    
+    return SNew(SDockTab)
+        .TabRole(ETabRole::NomadTab)
+        [
+            // Put your tab content here!
+            SNew(SBox)
+            .HAlign(HAlign_Fill)
+            .VAlign(VAlign_Fill)
+            [
+                SNew(SLuaFileInfo)
+                .BlueprintPath(BlueprintPath)
+            ]
+        ];
 }
 
 void FDHBlueprinBar::OnCopyRelativePath() const

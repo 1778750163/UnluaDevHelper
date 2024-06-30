@@ -3,6 +3,8 @@
 #include "BlueprintEditor.h"
 #include "DHBlueprintBarCommands.h"
 #include "BlueprintEditorModule.h"
+#include "MultiBoxBuilder.h"
+#include "SDockTab.h"
 #include "UnluaDevHelperDefine.h"
 #include "UnluaDevHelperEditor.h"
 #include "UnLuaInterface.h"
@@ -202,7 +204,11 @@ void FDHBlueprinBar::OnUnBindLua() const
 
 void FDHBlueprinBar::OnCreateLuaFile() 
 {
+#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION > 23 
     FGlobalTabmanager::Get()->TryInvokeTab(CreateLuaFileTabName);
+#else
+    FGlobalTabmanager::Get()->InvokeTab(CreateLuaFileTabName);
+#endif
 }
 
 TSharedRef<class SDockTab> FDHBlueprinBar::OnSpawnCreateLuaFileTab(const class FSpawnTabArgs& SpawnTabArgs)

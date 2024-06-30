@@ -29,6 +29,7 @@ private:
 
     void OnTextChanged(const FText& Text);
 
+    FText OnBlueprintPath() const;
     FText OnFilePath() const;
     
     void RefreshFilePath();

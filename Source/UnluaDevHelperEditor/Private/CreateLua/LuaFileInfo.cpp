@@ -3,14 +3,17 @@
 
 #include "LuaFileInfo.h"
 
+#include "CustomNotification.h"
 #include "EditorStyleSet.h"
 #include "LuaRichTextSyntaxHighlighterTextLayoutMarshaller.h"
 
 #include "SlateOptMacros.h"
 #include "TestStyle.h"
+#include "UnluaDevHelperEditor.h"
 #include "UnluaDevHelperSetting.h"
 #include "UnluaDevHelperStyle.h"
 #include "Framework/Text/SyntaxHighlighterTextLayoutMarshaller.h"
+#include "Misc/FileHelper.h"
 #include "Widgets/Input/SMultiLineEditableTextBox.h"
 #include "Widgets/Input/STextComboBox.h"
 
@@ -21,11 +24,21 @@
 
 #define LOCTEXT_NAMESPACE "SLuaFileInfo"
 
+class FUnluaDevHelperEditorModule;
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void SLuaFileInfo::Construct(const FArguments& InArgs)
 {
 	BlueprintPath=InArgs._BlueprintPath.Get();
+	{
+	    int32 LastSlashIndex;
+	    if(BlueprintPath.FindLastChar('.', LastSlashIndex))
+	    {
+	        BlueprintName=BlueprintPath.Mid(LastSlashIndex+1);
+	    }
+	}
+    
+    
 	SpeedSettingStrings.Empty();
 	RefreshFilePath();
 	CheckLuaFileStr="";
@@ -223,18 +236,40 @@ void SLuaFileInfo::Construct(const FArguments& InArgs)
 
 FReply SLuaFileInfo::OnCreateLuaFileButtonClicked()
 {
-	UUnluaDevHelperSetting* Setting=GetMutableDefault<UUnluaDevHelperSetting>();
-	if(IsValid(Setting))
-	{
-		for (auto LuaInfo:Setting->LuaFileCreationRules)
-		{
-			if(LuaInfo.Key.Len() && LuaInfo.Key==CheckLuaFileStr)
-			{
-				
-			}
-		}
-	}
+    FString TemplateFilePath=GetTemplateFilePath();
+    if(TemplateFilePath.Len()==0) return FReply::Handled();
+    FString NewFilePath=FilePath;
+    NewFilePath.ReplaceInline(TEXT("."),TEXT("/"));
+    NewFilePath+=".lua";
+    FString FullPath = FPaths::ConvertRelativePathToFull( FPaths::Combine(GetLuaProjectPath(),NewFilePath));
+    bool bShouldOverwrite=true;
+    if(FPaths::FileExists(FullPath))
+    {
+        // 文件已存在，显示警示弹窗
+        bShouldOverwrite = ShowOverwriteWarningDialog(FullPath);
+    }
+    if(bShouldOverwrite)
+    {
+        if (FFileHelper::SaveStringToFile(RichEditableText.ToString(), *FullPath))
+        {
+            UCustomNotification::ShowLinkNotification(FText::FromString(TEXT("Create File Succeed!")),FText::FromString(FullPath),FSimpleDelegate::CreateLambda([NewFilePath]()
+            {
+                FUnluaDevHelperEditorModule& UnluaDevHelperEditor=FModuleManager::Get().LoadModuleChecked<FUnluaDevHelperEditorModule>(TEXT("UnluaDevHelperEditor"));
+                UnluaDevHelperEditor.OpenSolution(NewFilePath);
+            }));
+        }
+    }
 	return FReply::Handled();
+}
+
+bool SLuaFileInfo::ShowOverwriteWarningDialog(const FString& InFilePath)
+{
+    FText Title = FText::FromString(TEXT("File Exists"));
+    FText Message = FText::Format(FText::FromString(TEXT("The file '{0}' already exists. Do you want to overwrite it?")), FText::FromString(InFilePath));
+
+    EAppReturnType::Type ReturnType = FMessageDialog::Open(EAppMsgType::YesNo, Message, &Title);
+
+    return ReturnType == EAppReturnType::Yes;
 }
 
 void SLuaFileInfo::OnComboxSelect(TSharedPtr<FString> NewSelection, ESelectInfo::Type SelectInfo)
@@ -261,37 +296,121 @@ FText SLuaFileInfo::OnFilePath() const
 
 void SLuaFileInfo::RefreshFilePath()
 {
-	FString Path="";
-	FString SubPath="";
-	FString FileSuffx="";
+    FString BPPath=BlueprintPath;
+    {
+        int32 LastSlashIndex;
+        if (BPPath.FindLastChar('/', LastSlashIndex))
+        {
+            BPPath=BPPath.Left(LastSlashIndex);
+        }
+        LastSlashIndex=BPPath.Find(TEXT("/Game/"),ESearchCase::CaseSensitive);
+        if(LastSlashIndex>=0)
+        {
+            BPPath=BPPath.Mid(LastSlashIndex+6);
+        }
+    }
+	FString Path=BPPath;
+	SubPath="";
+	FileSuffx="";
 	UUnluaDevHelperSetting* Setting=GetMutableDefault<UUnluaDevHelperSetting>();
 	if(IsValid(Setting))
 	{
-		Path=Setting->LuaFileDirectory;
 		for (auto LuaInfo:Setting->LuaFileCreationRules)
 		{
 			if(LuaInfo.Key.Len() && LuaInfo.Key==CheckLuaFileStr)
 			{
-				SubPath=LuaInfo.Value.bHasSubDirectory?LuaInfo.Value.SubDirectory:"";
-				FileSuffx=LuaInfo.Value.bHasFileSuffix?LuaInfo.Value.FileSuffix:"";
+				SubPath=LuaInfo.Value.SubDirectory;
+				FileSuffx=LuaInfo.Value.FileSuffix;
+			    if(LuaInfo.Value.bIsFixedGenerationPath && LuaInfo.Value.FixedGenerationPath.Len())
+			    {
+			        Path=LuaInfo.Value.FixedGenerationPath; 
+			    }
 				break;
 			}
 		}
 	}
-	Path = SubPath.Len() > 0 ? FPaths::Combine(Path, SubPath) : Path;
 
+	Path = SubPath.Len() > 0 ? FPaths::Combine(Path, SubPath) : Path;
+    
 	if(LuaFileName.Len())
 	{
-		FilePath=FPaths::Combine(Path,LuaFileName)+FileSuffx+".lua";
+		Path=FPaths::Combine(Path,LuaFileName)+FileSuffx;
 	}
-	else
-	{
-		FilePath=Path;
-	}
+    else
+    {
+        Path=FPaths::Combine(Path,BlueprintName)+FileSuffx;
+    }
+
+    
+    FilePath=Path;
+
+    
 	FilePath.ReplaceInline(TEXT("\\\\"),TEXT("."));
 	FilePath.ReplaceInline(TEXT("//"),TEXT("."));
 	FilePath.ReplaceInline(TEXT("/"),TEXT("."));
 	FilePath.ReplaceInline(TEXT("\\"),TEXT("."));
+    RefreshFileText();
+}
+
+void SLuaFileInfo::RefreshFileText()
+{
+    FString TemplateFilePath=GetTemplateFilePath();
+    FString Result;
+    if (FFileHelper::LoadFileToString(Result, *TemplateFilePath))
+    {
+        // BlueprintPath
+        {
+            int32 Index=-1;
+            if(BlueprintPath.FindLastChar('.',Index))
+            {
+                Result=Result.Replace(TEXT("@{BlueprintPath}"),*BlueprintPath.Left(Index),ESearchCase::Type::CaseSensitive);
+            }
+        }
+        // LuaFilePath
+        {
+           Result = Result.Replace(TEXT("@{LuaFilePath}"),*FilePath,ESearchCase::Type::CaseSensitive);
+        }
+        // UserName
+        {
+            FString UserName;
+            FRegistryManager::Get().GetString(EDevHelperSettingToString(EDevHelperSetting::UserName),UserName);
+            Result=Result.Replace(TEXT("@{UserName}"),*UserName,ESearchCase::Type::CaseSensitive);
+        }
+        // CreateTime
+        {
+            Result=Result.Replace(TEXT("@{CreateTime}"),*FDateTime::Now().ToString(),ESearchCase::Type::CaseSensitive);
+        }
+        // ClassName
+        {
+            FString ClassName=BlueprintName;
+            if(LuaFileName.Len())
+            {
+                ClassName=LuaFileName;
+            }
+            ClassName+=FileSuffx;
+            Result.ReplaceInline(TEXT("@{ClassName}"),*ClassName,ESearchCase::Type::CaseSensitive);
+        }
+
+        RichEditableText=FText::FromString(Result);
+    }
+}
+
+FString SLuaFileInfo::GetTemplateFilePath()
+{
+    FString TemplateFilePath="";
+    UUnluaDevHelperSetting* Setting=GetMutableDefault<UUnluaDevHelperSetting>();
+    if(IsValid(Setting))
+    {
+        for (auto LuaInfo:Setting->LuaFileCreationRules)
+        {
+            if(LuaInfo.Key.Len() && LuaInfo.Key==CheckLuaFileStr)
+            {
+                TemplateFilePath=FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(),LuaInfo.Value.TemplateFile.FilePath));
+                break;
+            }
+        }
+    }
+    return TemplateFilePath;
 }
 
 FText SLuaFileInfo::GetRichEditableText() const

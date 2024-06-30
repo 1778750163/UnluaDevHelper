@@ -25,24 +25,15 @@ public:
     FFilePath TemplateFile;
 
     UPROPERTY(Config,EditAnywhere)
-    bool bFixedGenerationPath;
+    bool bIsFixedGenerationPath;
     
-    UPROPERTY(Config,EditAnywhere,meta = (FilePathFilter = "lua", RelativeToGameDir,EditCondition  = bFixedGenerationPath ,EditConditionHides))
-    FFilePath FixedGenerationPath;
-    
-    UPROPERTY(Config,EditAnywhere,meta = (FilePathFilter = "lua", RelativeToGameDir,EditCondition  = bFixedGenerationPath ,EditConditionHides))
-    TArray<int32> RemoveDirIndexs;
-    
-    UPROPERTY(Config, EditAnywhere, meta=(DefaultValue = false))
-    bool bHasSubDirectory;
-    
-    UPROPERTY(Config,EditAnywhere,meta=(EditCondition  = bHasSubDirectory ,EditConditionHides))
-    FString SubDirectory;
+    UPROPERTY(Config,EditAnywhere,meta = (EditCondition  = bIsFixedGenerationPath ,EditConditionHides))
+    FString FixedGenerationPath;
 
-    UPROPERTY(Config, EditAnywhere,meta=(DefaultValue = false))
-    bool bHasFileSuffix;
+    UPROPERTY(Config,EditAnywhere)
+    FString SubDirectory;
     
-    UPROPERTY(Config,EditAnywhere,meta=(EditCondition  = bHasFileSuffix ,EditConditionHides))
+    UPROPERTY(Config,EditAnywhere)
     FString FileSuffix;
 };
 
@@ -60,6 +51,9 @@ public:
 
     UPROPERTY(Config, EditAnywhere, Category = "LuaFile")
     FString LuaFileDirectory=TEXT("Content/Script");
+
+    UPROPERTY(Config, EditAnywhere, Category = "LuaFile")
+    FString BlueprintLuaFileSpawnPath;
     
     UPROPERTY(Config, EditAnywhere, Category = "LuaFile")
     TMap<FString,FLuaFileCreationRule> LuaFileCreationRules;

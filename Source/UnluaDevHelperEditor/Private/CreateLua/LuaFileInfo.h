@@ -25,6 +25,8 @@ private:
 
     FReply OnCreateLuaFileButtonClicked();
 
+    bool ShowOverwriteWarningDialog(const FString& InFilePath);
+    
     void OnComboxSelect(TSharedPtr<FString> NewSelection, ESelectInfo::Type SelectInfo);
 
     void OnTextChanged(const FText& Text);
@@ -33,6 +35,10 @@ private:
     FText OnFilePath() const;
     
     void RefreshFilePath();
+
+    void RefreshFileText();
+
+    FString GetTemplateFilePath();
 
     FText GetRichEditableText() const;
 
@@ -47,6 +53,7 @@ private:
 private:
 
     FString BlueprintPath;
+    FString BlueprintName;
     
     FText RichEditableText;
     TSharedPtr<FSyntaxHighlighterTextLayoutMarshaller> SyntaxHighlighterMarshaller;
@@ -56,4 +63,6 @@ private:
     FString CheckLuaFileStr;
     FString LuaFileName;
     FString FilePath;
+    FString SubPath;
+    FString FileSuffx;
 };

@@ -23,13 +23,14 @@ enum class EIdeaDebugMode:uint8
 
 FString static EDevHelperSettingToString( EDevHelperSetting v )
 {
-    const char* Ret = ""; switch ( v )
+    const char* Ret = "";
+    switch ( v )
     {
-    case EDevHelperSetting::IDEType:            Ret = "IDEType";            break;
-    case EDevHelperSetting::bEnableDebug:       Ret = "bEnableDebug";       break;
-    case EDevHelperSetting::UserName:           Ret = "UserName";           break;
-    case EDevHelperSetting::IdeaName:           Ret = "IdeaName";    break;
-    case EDevHelperSetting::IdeaDebugMode:           Ret = "IdeaDebugMode";    break;
+        case EDevHelperSetting::IDEType:                Ret = "IDEType";            break;
+        case EDevHelperSetting::bEnableDebug:           Ret = "bEnableDebug";       break;
+        case EDevHelperSetting::UserName:               Ret = "UserName";           break;
+        case EDevHelperSetting::IdeaName:               Ret = "IdeaName";           break;
+        case EDevHelperSetting::IdeaDebugMode:          Ret = "IdeaDebugMode";      break;
     }
 
     return Ret;

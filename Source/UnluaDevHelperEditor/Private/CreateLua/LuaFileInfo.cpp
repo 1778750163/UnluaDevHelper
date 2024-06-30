@@ -5,7 +5,7 @@
 
 #include "EditorStyleSet.h"
 #include "LuaRichTextSyntaxHighlighterTextLayoutMarshaller.h"
-#include "SEditableTextBox.h"
+
 #include "SlateOptMacros.h"
 #include "TestStyle.h"
 #include "UnluaDevHelperSetting.h"
@@ -13,6 +13,11 @@
 #include "Framework/Text/SyntaxHighlighterTextLayoutMarshaller.h"
 #include "Widgets/Input/SMultiLineEditableTextBox.h"
 #include "Widgets/Input/STextComboBox.h"
+
+#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION <= 23
+#include "SEditableTextBox.h"
+#endif
+
 
 #define LOCTEXT_NAMESPACE "SLuaFileInfo"
 

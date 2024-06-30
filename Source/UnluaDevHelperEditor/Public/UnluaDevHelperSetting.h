@@ -25,6 +25,12 @@ public:
     FFilePath TemplateFile;
 
     UPROPERTY(Config,EditAnywhere)
+    bool bFixedGenerationPath;
+    
+    UPROPERTY(Config,EditAnywhere,meta = (FilePathFilter = "lua", RelativeToGameDir,EditCondition  = bFixedGenerationPath ,EditConditionHides))
+    FFilePath FixedGenerationPath;
+    
+    UPROPERTY(Config,EditAnywhere,meta = (FilePathFilter = "lua", RelativeToGameDir,EditCondition  = bFixedGenerationPath ,EditConditionHides))
     TArray<int32> RemoveDirIndexs;
     
     UPROPERTY(Config, EditAnywhere, meta=(DefaultValue = false))

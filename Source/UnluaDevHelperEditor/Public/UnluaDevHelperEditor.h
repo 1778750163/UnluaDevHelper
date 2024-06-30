@@ -25,7 +25,8 @@ public:
 	void OpenSolution(const FString& FileName=TEXT(""));
 
 	void ChangeIDE(EIDEType InIDEType);
-	
+
+	void ChangeIdeaDebugMode(EIdeaDebugMode InIdeaDebugMode);
 private:
 
 	void StartDebug(const bool bStart);
@@ -40,6 +41,7 @@ private:
 
 private:
 	EIDEType IDEType;
+	EIdeaDebugMode IdeaDebugMode;
 	FString Host;
 	int32 VSCodePort;
 	int32 IDEAPort;

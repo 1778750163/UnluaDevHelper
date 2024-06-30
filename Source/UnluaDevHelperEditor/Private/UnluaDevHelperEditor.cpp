@@ -13,6 +13,7 @@
 #include "BlueprintBar/DHBlueprinBar.h"
 #include "CreateLua/CodeEditorStyle.h"
 #include "IDEAPathLocator/IDEAPathLocator.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "MenuBar/DHMainMenuBar.h"
 
 extern "C"
@@ -47,8 +48,10 @@ void FUnluaDevHelperEditorModule::StartupModule()
 		);
 	}
 	
-	
-	FRegistryManager::Get().GetEnum(EDevHelperSettingToString(EDevHelperSetting::IDEType),IDEType); 
+	IDEType=EIDEType::VSCode;
+	FRegistryManager::Get().GetEnum(EDevHelperSettingToString(EDevHelperSetting::IDEType),IDEType);
+	IdeaDebugMode=EIdeaDebugMode::TcpListen;
+	FRegistryManager::Get().GetEnum(EDevHelperSettingToString(EDevHelperSetting::IdeaDebugMode),IdeaDebugMode);
 	VSCodePort=8818;
 	IDEAPort=9966;
 	Host=TEXT("127.0.0.1");
@@ -115,6 +118,12 @@ void FUnluaDevHelperEditorModule::ChangeIDE(EIDEType InIDEType)
 {
 	IDEType=InIDEType;
 	FRegistryManager::Get().SetEnum(EDevHelperSettingToString(EDevHelperSetting::IDEType),IDEType); 
+}
+
+void FUnluaDevHelperEditorModule::ChangeIdeaDebugMode(EIdeaDebugMode InIdeaDebugMode)
+{
+	IdeaDebugMode=InIdeaDebugMode;
+	FRegistryManager::Get().SetEnum(EDevHelperSettingToString(EDevHelperSetting::IdeaDebugMode),IdeaDebugMode); 	
 }
 
 void FUnluaDevHelperEditorModule::StartDebug(const bool bStart)
@@ -184,7 +193,9 @@ void FUnluaDevHelperEditorModule::EnableIDEADebug(lua_State *L)
 	lua_getglobal(L, "package");
 	lua_getfield(L, -1, "cpath");
 	const char* currentCpath = lua_tostring(L, -1);
-	FString DllPath=FString::Printf(TEXT("/AppData/Roaming/JetBrains/IntelliJIdea%s/plugins/EmmyLua/debugger/emmy/windows/x64/?.dll"),*IdeaInstallInfo.V);
+	FString IdeaName;
+	FRegistryManager::Get().GetString(EDevHelperSettingToString(EDevHelperSetting::IdeaName),IdeaName);
+	FString DllPath=FString::Printf(TEXT("/AppData/Roaming/JetBrains/%s/plugins/EmmyLua/debugger/emmy/windows/x64/?.dll"),*IdeaName);
 	const std::string newCpath = std::string(currentCpath) + ";"+userProfile+TCHAR_TO_ANSI(*DllPath);
 	lua_pop(L, 1);
 	lua_pushstring(L, newCpath.c_str());
@@ -192,7 +203,13 @@ void FUnluaDevHelperEditorModule::EnableIDEADebug(lua_State *L)
 	lua_pop(L, 1);
 	
 	FString luaCode =FString::Printf( TEXT("local dbg = require('emmy_core') \n dbg.tcpConnect('%s', %d)"),*Host,IDEAPort);
+	if(IdeaDebugMode==EIdeaDebugMode::TcpListen)
+	{
+		luaCode =FString::Printf( TEXT("local dbg = require('emmy_core') \n dbg.tcpListen('%s', %d)"),*Host,IDEAPort);
+	}
 	if (luaL_dostring(L, TCHAR_TO_ANSI(*luaCode)) != LUA_OK) {
+		const char* error = lua_tostring(L, -1); // 获取错误信息
+		UE_LOG(LogTemp, Error, TEXT("Lua error: %s"), ANSI_TO_TCHAR(error)); // 打印错误信息
 		lua_pop(L, 1);
 	}
 

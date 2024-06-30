@@ -9,6 +9,16 @@ enum class EDevHelperSetting :uint8
 {
     IDEType,
     bEnableDebug,
+    UserName,
+    IdeaName,
+    IdeaDebugMode
+};
+
+UENUM()
+enum class EIdeaDebugMode:uint8
+{
+    TcpListen,
+    TcpConnect
 };
 
 FString static EDevHelperSettingToString( EDevHelperSetting v )
@@ -17,6 +27,9 @@ FString static EDevHelperSettingToString( EDevHelperSetting v )
     {
     case EDevHelperSetting::IDEType:            Ret = "IDEType";            break;
     case EDevHelperSetting::bEnableDebug:       Ret = "bEnableDebug";       break;
+    case EDevHelperSetting::UserName:           Ret = "UserName";           break;
+    case EDevHelperSetting::IdeaName:           Ret = "IdeaName";    break;
+    case EDevHelperSetting::IdeaDebugMode:           Ret = "IdeaDebugMode";    break;
     }
 
     return Ret;

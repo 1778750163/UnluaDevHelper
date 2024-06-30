@@ -20,4 +20,6 @@ public:
     TSharedPtr<FUICommandInfo> SelectIDEA;
     TSharedPtr<FUICommandInfo> EnableDebug;
     TSharedPtr<FUICommandInfo> ChoosePath;
+    TSharedPtr<FUICommandInfo> TcpListen;
+    TSharedPtr<FUICommandInfo> TcpConnect;
 };

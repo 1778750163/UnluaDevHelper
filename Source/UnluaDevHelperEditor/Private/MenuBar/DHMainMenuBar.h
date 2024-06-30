@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 
+enum class EIdeaDebugMode : uint8;
 class FExtender;
 class FUICommandList;
 enum class EIDEType : uint8;
@@ -25,21 +26,33 @@ private:
 
     void OnOpenSoulation();
 
-    static void OnSelectIDE(EIDEType Type);
-    static bool OnCheckIDE(EIDEType Type);
+    void OnSelectIDE(EIDEType Type);
+    bool OnCheckIDE(EIDEType Type);
 
-    static void OnEnableDebug();
-    static bool IsEnableDebugCheck();
+    void OnEnableDebug();
+    bool IsEnableDebugCheck();
     
-    static void MakeIDEChangeMenu(FMenuBuilder& MenuBuilde);
+    void MakeIDEChangeMenu(FMenuBuilder& MenuBuilde);
 
+    void MakeDataSetting(FMenuBuilder& MenuBuilde);
 
+    void MakeIDEDebugModeMenu(FMenuBuilder& MenuBuilde);
+    void OnSelectIdeaDebugMode(EIdeaDebugMode Type);
+    bool OnCheckIdeaDebugMode(EIdeaDebugMode Type);
+    
+    FText OnUserName();
+    void OnUserNameTextCommitted(const FText& Text, ETextCommit::Type Type);
 
+    FText OnIdeaName();
+    void OnIdeaNameTextCommitted(const FText& Text, ETextCommit::Type Type);
+    
 private:
     const TSharedRef<FUICommandList> CommandList;
     TSharedPtr<FExtender> Extender;
     FString SelectedPath;
     TSharedPtr<STextBlock> PathDisplayTextBlock;
+    FString  UserName;
+    FString  IdeaName;
 };
 
 
